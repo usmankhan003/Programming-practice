@@ -1,90 +1,199 @@
 #include <iostream>
+#include <string>
+#include <queue>
 using namespace std;
-struct Process {
-  int id;
-  int arrivalTime;
-  int burstTime;
-  int completionTime;
-  int turnaroundTime;
-  int waitingTime;
+
+struct Task {
+    string taskName;
+    string taskId;
+    int timeDuration;
+    int priority;
+    Task* next;
+    
+    Task(string taskName, string taskId, int timeDuration, int priority)
+        : taskName(taskName), taskId(taskId), timeDuration(timeDuration), priority(priority), next(nullptr) {}
 };
-void calculateTimes(Process processes[], int n, int quantum) {
-  int remainingTime[n];
-  for (int i = 0; i < n; i++) {
-    remainingTime[i] = processes[i].burstTime;
-  }
-  int currentTime = 0;
-  bool allDone = false;
-  while (!allDone) {
-    allDone = true;
-    for (int i = 0; i < n; i++) {
-      if (remainingTime[i] > 0) {
-        allDone = false;
-        if (remainingTime[i] > quantum) {
-          currentTime = currentTime + quantum;
-          remainingTime[i] = remainingTime[i] - quantum;
-        } else {
-          currentTime = currentTime + remainingTime[i];
-          processes[i].completionTime = currentTime;
-          remainingTime[i] = 0;
+
+void addTask(Task*& head, string taskName, string taskId, int timeDuration, int priority) 
+{
+    Task* newTask = new Task(taskName, taskId, timeDuration, priority);
+
+    if (head == nullptr) {
+        head = newTask;
+    } 
+    else {
+        Task* temp = head;
+        while (temp->next != nullptr) {
+            temp = temp->next;
         }
-      }
+        temp->next = newTask;
     }
-  }
-}
-void calculateTurnaroundTime(Process processes[], int n) {
-  for (int i = 0; i < n; i++)
-    processes[i].turnaroundTime =
-        processes[i].completionTime - processes[i].arrivalTime;
 }
 
-void claculateWaitingTime(Process processes[], int n) {
-  for (int i = 0; i < n; i++)
-    processes[i].waitingTime =
-        processes[i].turnaroundTime - processes[i].burstTime;
+void displayTasks(Task* head) {
+    if (head == nullptr) {
+        cout << "No tasks to display!" << endl;
+        return;
+    }
+
+    Task* temp = head;
+    cout << "\nTask List:\n";
+    while (temp != nullptr) {
+        cout << "Task Name: " << temp->taskName
+             << ", Task ID: " << temp->taskId
+             << ", Time Duration: " << temp->timeDuration << " ms"
+             << ", Priority: " << temp->priority << endl;
+        temp = temp->next;
+    }
 }
 
-void printTable(Process processes[], int n) {
-  cout << "--------------------------------------------------------------------"
-          "----------------------\n";
-  cout << "| Process | Arrival Time | Burst Time | Completion Time | "
-          "Turnaround Time | Waiting Time |\n";
-  cout << "--------------------------------------------------------------------"
-          "----------------------\n";
-  for (int i = 0; i < n; i++) {
-    cout << "|    " << processes[i].id << "    |      "
-         << processes[i].arrivalTime << "      |     " << processes[i].burstTime
-         << "     |        " << processes[i].completionTime
-         << "        |        " << processes[i].turnaroundTime
-         << "         |      " << processes[i].waitingTime << "      |\n";
-  }
-  cout << "--------------------------------------------------------------------"
-          "----------------------\n";
+void priorityScheduling(Task*& head) {
+    if (head == nullptr) {
+        cout << "No tasks to process!" << endl;
+        return;
+    }
+
+    cout << "\nProcessing Tasks (Priority Scheduling):\n";
+
+    while (head != nullptr) {
+        // Find the highest priority task
+        Task* highest = head;
+        Task* prev = nullptr;
+        Task* highestPrev = nullptr;
+
+        for (Task* temp = head; temp != nullptr; temp = temp->next) {
+            if (temp->priority > highest->priority) {
+                highest = temp;
+                highestPrev = prev;
+            }
+            prev = temp;
+        }
+
+        // Process the highest priority task
+        cout << "Processing Task: " << highest->taskName
+             << " (Task ID: " << highest->taskId
+             << ", Time Duration: " << highest->timeDuration
+             << " ms, Priority: " << highest->priority << ")" << endl;
+
+        highest->timeDuration -= 10;
+        highest->priority--;
+
+        if (highest->timeDuration <= 0) {
+            cout << "Task " << highest->taskName << " completed." << endl;
+
+            // Remove the task from the list
+            if (highestPrev == nullptr) {
+                head = highest->next;
+            } 
+            else {
+                highestPrev->next = highest->next;
+            }
+            delete highest;
+        }
+    }
+    cout << "All tasks executed completely." << endl;
 }
+
+void roundRobin(Task*& head) {
+    if (head == nullptr) {
+        cout << "No tasks to process!" << endl;
+        return;
+    }
+
+    queue<Task*> taskQueue;
+    for (Task* temp = head; temp != nullptr; temp = temp->next) {
+        taskQueue.push(temp);
+    }
+
+    cout << "\nProcessing Tasks (Round Robin):\n";
+    while (!taskQueue.empty()) {
+        Task* currentTask = taskQueue.front();
+        taskQueue.pop();
+
+        cout << "Processing Task: " << currentTask->taskName
+             << " (Task ID: " << currentTask->taskId
+             << ", Time Duration: " << currentTask->timeDuration << " ms)" << endl;
+
+        currentTask->timeDuration -= 10;
+
+        if (currentTask->timeDuration > 0) {
+            taskQueue.push(currentTask);
+        } else {
+            cout << "Task " << currentTask->taskName << " completed." << endl;
+        }
+    }
+    head = nullptr; // All tasks have been processed
+    cout << "All tasks executed completely." << endl;
+}
+
 int main() {
-  int n, quantum;
-  cout << "Enter The Number of Process";
-  cin >> n;
-  cout << "Enter The Time Quantum";
-  cin >> quantum;
+    Task* head = nullptr;
 
-  Process processes[n];
-  cout << "Enter process details:\n";
-  for (int i = 0; i < n; i++) {
-    cout << "Process " << i + 1 << ":\n";
-    processes[i].id = i + 1;
-    cout << "   Arrival Time: ";
-    cin >> processes[i].arrivalTime;
-    cout << "   Burst Time: ";
-    cin >> processes[i].burstTime;
-  }
+    while (true) {
+        cout << "\nMenu:" << endl;
+        cout << "1. Add Task" << endl;
+        cout << "2. Display Tasks" << endl;
+        cout << "3. Priority Scheduling" << endl;
+        cout << "4. Round Robin Scheduling" << endl;
+        cout << "5. Exit" << endl;
+        cout << "Enter your choice: ";
 
-  calculateTimes(processes, n, quantum);
-  calculateTurnaroundTime(processes, n);
-  claculateWaitingTime(processes, n);
+        int choice;
+        cin >> choice;
 
-  cout << "\nRound Robin Scheduling Results:\n";
-  printTable(processes, n);
+        switch (choice) {
+            case 1: {
+                string taskName;
+                string taskId;
+                int timeDuration;
+                int priority;
+                char addMore;
 
-  return 0;
-} 
+                do {
+                    cout << "Enter Task Name: ";
+                    cin.ignore();
+                    getline(cin, taskName);
+
+                    cout << "Enter Task ID: ";
+                    getline(cin, taskId);
+
+                    cout << "Enter Time Duration (in milliseconds): ";
+                    cin >> timeDuration;
+
+                    cout << "Enter Priority: ";
+                    cin >> priority;
+
+                    addTask(head, taskName, taskId, timeDuration, priority);
+                    cout << "Task added successfully!" << endl;
+
+                    cout << "Do you want to add another task? (y/n): ";
+                    cin >> addMore;
+                } while (addMore == 'y' || addMore == 'Y');
+
+                break;
+            }
+
+            case 2:
+                displayTasks(head);
+                break;
+
+            case 3:
+                priorityScheduling(head);
+                break;
+
+            case 4:
+                roundRobin(head);
+                break;
+
+            case 5:
+                cout << "Program Ends. Goodbye!" << endl;
+                return 0;
+
+            default:
+                cout << "Invalid choice! Please try again." << endl;
+                break;
+        }
+    }
+
+    return 0;
+}
