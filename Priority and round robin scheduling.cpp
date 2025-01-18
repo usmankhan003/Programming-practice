@@ -246,7 +246,7 @@ int main() {
                     cout << "Enter Time Duration (in milliseconds): ";
                     cin >> timeDuration;
 
-                    cout << "Enter Priority (optional, enter 0 if unused): ";
+                    cout << "Enter Priority (optional enter 0 if unused): ";
                     cin >> priority;
 
                     addTask(head, taskName, taskId, timeDuration, priority);
