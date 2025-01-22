@@ -8,14 +8,15 @@ struct Task {
     string taskName;
     string taskId;
     int timeDuration;
-    int priority;
+    int priority; // Priority field
     Task* next;
 
-    Task(string taskName, string taskId, int timeDuration, int priority = 0)
+    Task(string taskName, string taskId, int timeDuration, int priority)
         : taskName(taskName), taskId(taskId), timeDuration(timeDuration), priority(priority), next(nullptr) {}
 };
 
-void addTask(Task*& head, string taskName, string taskId, int timeDuration, int priority = 0) {
+void addTask(Task*& head, string taskName, string taskId, int timeDuration) {
+    int priority = 0;  // Set default priority if you don't want to ask for it
     Task* newTask = new Task(taskName, taskId, timeDuration, priority);
 
     if (head == nullptr) {
@@ -44,6 +45,46 @@ void displayTasks(Task* head) {
              << ", Priority: " << temp->priority << endl;
         temp = temp->next;
     }
+}
+
+void priorityScheduling(Task*& head) {
+    if (head == nullptr) {
+        cout << "No tasks to process!" << endl;
+        return;
+    }
+
+    cout << "\nProcessing Tasks (Priority Scheduling):\n";
+    while (head != nullptr) {
+        Task *highestPriorityTask = head, *prev = nullptr, *highestPrev = nullptr;
+
+        // Find the task with the highest priority
+        for (Task* temp = head; temp != nullptr; temp = temp->next) {
+            if (temp->priority > highestPriorityTask->priority) {
+                highestPriorityTask = temp;
+                highestPrev = prev;
+            }
+            prev = temp;
+        }
+
+        cout << "Processing Task: " << highestPriorityTask->taskName
+             << " (Task ID: " << highestPriorityTask->taskId
+             << ", Time Duration: " << highestPriorityTask->timeDuration << " ms"
+             << ", Priority: " << highestPriorityTask->priority << ")" << endl;
+
+        highestPriorityTask->timeDuration -= 10;
+        if (highestPriorityTask->timeDuration <= 0) {
+            cout << "Task " << highestPriorityTask->taskName << " completed." << endl;
+
+            // Remove the completed task
+            if (highestPrev == nullptr) { // If the highest priority task is the head
+                head = highestPriorityTask->next;
+            } else {
+                highestPrev->next = highestPriorityTask->next;
+            }
+            delete highestPriorityTask;
+        }
+    }
+    cout << "All tasks executed completely." << endl;
 }
 
 void fifo(Task*& head) {
@@ -137,47 +178,6 @@ void sjf(Task*& head) {
     cout << "All tasks executed completely." << endl;
 }
 
-void priorityScheduling(Task*& head) {
-    if (head == nullptr) {
-        cout << "No tasks to process!" << endl;
-        return;
-    }
-
-    cout << "\nProcessing Tasks (Priority Scheduling):\n";
-    while (head != nullptr) {
-        Task* highest = head;
-        Task* prev = nullptr;
-        Task* highestPrev = nullptr;
-
-        for (Task* temp = head; temp != nullptr; temp = temp->next) {
-            if (temp->priority > highest->priority) {
-                highest = temp;
-                highestPrev = prev;
-            }
-            prev = temp;
-        }
-
-        cout << "Processing Task: " << highest->taskName
-             << " (Task ID: " << highest->taskId
-             << ", Time Duration: " << highest->timeDuration
-             << " ms, Priority: " << highest->priority << ")" << endl;
-
-        highest->timeDuration -= 10;
-        highest->priority--;
-
-        if (highest->timeDuration <= 0) {
-            cout << "Task " << highest->taskName << " completed." << endl;
-            if (highestPrev == nullptr) {
-                head = highest->next;
-            } else {
-                highestPrev->next = highest->next;
-            }
-            delete highest;
-        }
-    }
-    cout << "All tasks executed completely." << endl;
-}
-
 void roundRobin(Task*& head) {
     if (head == nullptr) {
         cout << "No tasks to process!" << endl;
@@ -232,7 +232,7 @@ int main() {
         switch (choice) {
             case 1: {
                 string taskName, taskId;
-                int timeDuration, priority;
+                int timeDuration;
                 char addMore;
 
                 do {
@@ -246,10 +246,8 @@ int main() {
                     cout << "Enter Time Duration (in milliseconds): ";
                     cin >> timeDuration;
 
-                    cout << "Enter Priority (optional enter 0 if unused): ";
-                    cin >> priority;
-
-                    addTask(head, taskName, taskId, timeDuration, priority);
+                    // Don't ask for priority here
+                    addTask(head, taskName, taskId, timeDuration);
                     cout << "Task added successfully!" << endl;
 
                     cout << "Do you want to add another task? (y/n): ";
@@ -283,7 +281,11 @@ int main() {
                 roundRobin(head);
                 break;
 
-           
+            case 8:
+                return 0;
+
+            default:
+                cout << "Invalid choice. Please try again." << endl;
         }
     }
     return 0;
